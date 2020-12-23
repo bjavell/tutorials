@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+    name: "bentestaks-779b"
+    labels:
+        app: "bentestaks-779b"
+    annotations:
+        kubernetes.io/ingress.class: addon-http-application-routing
+spec:
+    rules:
+        - host: bentestaks8983-bentestaks-779b.5aaf150626694264b73a.southeastasia.aksapp.io
+          http:
+            paths:
+            - path: /
+              backend:
+                serviceName: "bentestaks-779b"
+                servicePort: 8080

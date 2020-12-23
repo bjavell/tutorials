@@ -1,0 +1,19 @@
+apiVersion : apps/v1
+kind: Deployment
+metadata:
+  name: "bentestaks-779b"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: "bentestaks-779b"
+  template:
+    metadata:
+      labels:
+        app: "bentestaks-779b"
+    spec:
+      containers:
+        - name: "bentestaks-779b"
+          image: "bentestacr.azurecr.io/bentestaks"
+          ports:
+          - containerPort: 8080

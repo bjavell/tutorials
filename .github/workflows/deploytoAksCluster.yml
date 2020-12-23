@@ -1,0 +1,51 @@
+on: [push]
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    
+    - uses: azure/docker-login@v1
+      with:
+        login-server: bentestacr.azurecr.io
+        username: ${{ secrets.acr_bentestacr_username }}
+        password: ${{ secrets.acr_bentestacr_password }}
+    
+    - name: Build and push image to ACR
+      id: build-image
+      run: |
+        docker build "$GITHUB_WORKSPACE/azure/docker" -f  "azure/docker/Dockerfile" -t bentestacr.azurecr.io/bentestaks:${{ github.sha }}
+        docker push bentestacr.azurecr.io/bentestaks:${{ github.sha }}
+    
+    - uses: azure/k8s-set-context@v1
+      with:
+         kubeconfig: ${{ secrets.aks_bentestaks_kubeConfig }}
+      id: login
+    
+    - name: Create namespace
+      run: |
+        namespacePresent=`kubectl get namespace | grep bentestaks8983 | wc -l`
+        if [ $namespacePresent -eq 0 ]
+        then
+            echo `kubectl create namespace bentestaks8983`
+        fi
+
+    - uses: azure/k8s-create-secret@v1
+      with:
+        namespace: bentestaks8983
+        container-registry-url: bentestacr.azurecr.io
+        container-registry-username: ${{ secrets.acr_bentestacr_username }}
+        container-registry-password: ${{ secrets.acr_bentestacr_password }}
+        secret-name: bentestaksdockerauth
+       
+    - uses: azure/k8s-deploy@v1.2
+      with:
+        namespace: bentestaks8983
+        manifests: |
+          manifests/deployment.yml
+          manifests/service.yml
+          manifests/ingress.yml
+        images: |
+          bentestacr.azurecr.io/bentestaks:${{ github.sha }}
+        imagepullsecrets: |
+          bentestaksdockerauth
